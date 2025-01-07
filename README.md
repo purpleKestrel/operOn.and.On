@@ -6,7 +6,9 @@ Leanie Williams
 ## Introduction
 
 - Can we determine bacterial operon structure using the GFF and genome information?
-- Can operons be used as the features for transcriptomic experiments? 
+- Can operons be used as the features for transcriptomic experiments?
+- How do we find promoters?
+- What are the regulators?
 
 ## Methods
 
@@ -41,4 +43,6 @@ Testing:
 ## Results
 
 - argument parser
-- define feature name, BED attributes (chromosome, start, stop, name, score, strand, ID, feature type, description etc etc...) 
+- define feature name, BED attributes (chromosome, start, stop, name, score, strand, ID, feature type, description etc etc...)
+
+
