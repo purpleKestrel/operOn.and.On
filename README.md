@@ -24,8 +24,8 @@ rules:
 	- serially means that the number of bases between features should not exceed 500 bases
 (*note* we will examine the threshold of bases and how it impacts the output)
 
-**input**: gff
-**output** : csv
+** input **: gff
+** output ** : csv
 ---
 
 Testing:
