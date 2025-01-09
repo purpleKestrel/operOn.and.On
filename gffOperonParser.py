@@ -49,16 +49,18 @@ def find_operons(df):
     
     for index, row in sorted_df.iterrows():
         if (current_operon and (row['strand'] != last_strand)):
+                operons.append(current_operon)
+                current_operon = []
+            current_operon.append(row)
+            last_end = row['end']
+            last_strand = row['strand']
+
+        if current_operon:
             operons.append(current_operon)
-            current_operon = []
-        current_operon.append(row)
-        last_end = row['end']
-        last_strand = row['strand']
-    
-    if current_operon:
-        operons.append(current_operon)
-    
+
     return operons
+    
+
 
 def operons_to_csv(operons, output_file):
     """ Convert list of operons to CSV format. """
