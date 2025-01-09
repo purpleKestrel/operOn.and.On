@@ -46,6 +46,7 @@ def find_operons(df):
         last_end = None
 
         for index, row in sorted_group.iterrows():
+            #if current_operon and (row['start'] - last_end > 150):
             if current_operon and (row['start'] - last_end > 500):
                 operons.append(current_operon)
                 current_operon = []
