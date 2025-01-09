@@ -39,24 +39,25 @@ def find_operons(df):
     operons = []
     df['attributes_dict'] = df['attribute'].apply(parse_attributes)
     
-    sorted_df = df.sort_values(by=['seqname', 'start'])
-    current_operon = []
-    last_end = None
-    last_strand = None
-    
-    for index, row in sorted_df.iterrows(): ### will want to make a user defined area here
- #       if (current_operon and (row['strand'] != last_strand or row['start'] - last_end > 500)):
-        if (current_operon and (row['strand'] != last_strand or row['start'] - last_end > 150)):
+    ### seq+ strand
+    for (seqname, strand), group in df.groupby(['seqname', 'strand']):
+        sorted_group = group.sort_values(by = 'start')
+        current_operon = []
+        last_end = None
+
+        for index, row in sorted_group.iterrows():
+            if current_operon and (row['start'] - last_end > 500):
+                operons.append(current_operon)
+                current_operon = []
+            current_operon.append(row)
+            last_end = row['end']
+
+        if current_operon:
             operons.append(current_operon)
-            current_operon = []
-        current_operon.append(row)
-        last_end = row['end']
-        last_strand = row['strand']
-    
-    if current_operon:
-        operons.append(current_operon)
-    
+
     return operons
+    
+
 
 def operons_to_csv(operons, output_file):
     """ Convert list of operons to CSV format. """
