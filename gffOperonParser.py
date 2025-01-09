@@ -37,6 +37,15 @@ def parse_attributes(attribute_str):
         attributes[key] = value
     return attributes
 
+def extract_gene_name(attributes):
+    """ Extract gene name or gene ID from the gff attributes"""
+    for attr in attributes.split(';'):
+        if attr.startswith('Name'):
+            return attr.split('=')[1]
+        if attr.startswith('ID='):
+            return attr.split('=')[1]
+    return 'unknown' ## default for no name/id
+    
 def find_operons(df):
     """ Identify operons based on daRulez: co-orientation and seriality of features. """
     operons = []
@@ -60,6 +69,24 @@ def find_operons(df):
 
     return operons
     
+def gff_2_bed(gff_file, bed_file):
+    with open(gff_file, 'r') as gff, open(bed_file, 'w') as bed:
+        for line in gff:
+            if line.startswith("#"):
+                continue #skip header
+            fields = line.strip().split('\t')
+            if len(fields) < 9:
+                continue #skip incomplete lines
+
+            chrom, source, feature, start, end, score, strand, frame, attributes = fields
+            ### adjust for bed format starting at 0
+            start_bed = int(start) - 1
+
+            gene_name = extract_gene_name(attributes)
+
+            bed_line = f"{chrom}\t{start_bed}\t{end}\t{gene_name}\t{score}\t{strand}\n"
+            bed.write(bed_line)
+
 
 
 def operons_to_csv(operons, output_file):
