@@ -24,6 +24,9 @@ def read_gff(gff_file):
                      names=['seqname', 'source', 'feature', 'start', 'end', 'score', 'strand', 'frame', 'attribute'])
     ### Filter out entire genome if feature type is region and covers the full genome length
     df = df[~((df['feature'] == 'region') & (df['start'] == 1) & (df['end'] == df['end'].max()))]
+    ### filter to genes and pseudogenes. 
+    df = df[df['feature'].isin(['gene', 'pseudogene'])]
+
     return df
 
 def parse_attributes(attribute_str):
@@ -39,19 +42,18 @@ def find_operons(df):
     operons = []
     df['attributes_dict'] = df['attribute'].apply(parse_attributes)
     
-    ### seq+ strand
-    for (seqname, strand), group in df.groupby(['seqname', 'strand']):
-        sorted_group = group.sort_values(by = 'start')
-        current_operon = []
-        last_end = None
-
-        for index, row in sorted_group.iterrows():
-            #if current_operon and (row['start'] - last_end > 150):
-            if current_operon and (row['start'] - last_end > 500):
+    sorted_df = df.sort_values(by=['seqname', 'start'])
+    current_operon = []
+    last_end = None
+    last_strand = None
+    
+    for index, row in sorted_df.iterrows():
+        if (current_operon and (row['strand'] != last_strand)):
                 operons.append(current_operon)
                 current_operon = []
             current_operon.append(row)
             last_end = row['end']
+            last_strand = row['strand']
 
         if current_operon:
             operons.append(current_operon)
@@ -62,22 +64,28 @@ def find_operons(df):
 
 def operons_to_csv(operons, output_file):
     """ Convert list of operons to CSV format. """
+    written = set()
     with open(output_file, 'w') as f:
+        ### header
+        f.write("Feature, Locus_tag, Gene_type, Operon_ID, Operon_Start, Operon_End, Strand\n" )
+           
         for operon in operons:
-            attributes = operon[0]['attributes_dict']
-            identifier = attributes.get('Name', attributes.get('locus_tag', 'unknown'))
-            operon_id = identifier + '_Op'
+            operon_id = f"{operon[0]['attributes_dict'].get('Name', operon[0]['attributes_dict'].get('locus_tag', 'unknown'))}_Op"
+            operon_start = min(feature['start'] for feature in operon)
+            operon_end = max(feature['end'] for feature in operon)
+            strand = operon[0]['strand']  # All features in operon have the same strand
+            
             for feature in operon:
                 attributes = feature['attributes_dict']
-                f.write(f"{feature['seqname']},{feature['start']},{feature['end']},"
-                        f"{attributes.get('gene', attributes.get('Name',''))},{feature['score']},{feature['strand']},{feature['feature']},"
-                        f"{operon_id},"
-                        f"{attributes.get('locus_tag','')},{attributes.get('product','')}\n")
+                locus_tag = attributes.get('locus_tag')
+                gene_type = 'pseudogene' if 'pseudo' in attributes else 'gene'
+                feature_name = attributes.get('Name')
+                f.write(f"{feature_name},{locus_tag}, {gene_type} ,{operon_id},{operon_start}, {operon_end}, {strand}\n")
 
 def main():
-    parser = argparse.ArgumentParser(description='Identify operons in a GFF file. Output results to CSV.')
+    parser = argparse.ArgumentParser(description='Identify operons in a GFF file and output to CSV, filtered to genes and pseudogenes.')
     parser.add_argument('gff_file', type=str, help='Path to the GFF file')
-    parser.add_argument('output_file', type=str, help='Path and name of results. Output CSV file')
+    parser.add_argument('output_file', type=str, help='Path to the output CSV file')
     
     args = parser.parse_args()
     
