@@ -44,19 +44,17 @@ def find_operons(df):
     
     sorted_df = df.sort_values(by=['seqname', 'start'])
     current_operon = []
-    last_end = None
     last_strand = None
     
     for index, row in sorted_df.iterrows():
         if (current_operon and (row['strand'] != last_strand)):
                 operons.append(current_operon)
                 current_operon = []
-            current_operon.append(row)
-            last_end = row['end']
-            last_strand = row['strand']
+        current_operon.append(row)
+        last_strand = row['strand']
 
-        if current_operon:
-            operons.append(current_operon)
+    if current_operon:
+        operons.append(current_operon)
 
     return operons
     
@@ -80,7 +78,11 @@ def operons_to_csv(operons, output_file):
                 locus_tag = attributes.get('locus_tag')
                 gene_type = 'pseudogene' if 'pseudo' in attributes else 'gene'
                 feature_name = attributes.get('Name')
-                f.write(f"{feature_name},{locus_tag}, {gene_type} ,{operon_id},{operon_start}, {operon_end}, {strand}\n")
+                unique_key = (locus_tag, operon_id, strand)
+                if unique_key not in written:
+                    f.write(f"{feature_name},{locus_tag}, {gene_type} ,{operon_id},{operon_start}, {operon_end}, {strand}\n")
+                    written.add(unique_key)
+
 
 def main():
     parser = argparse.ArgumentParser(description='Identify operons in a GFF file and output to CSV, filtered to genes and pseudogenes.')
