@@ -14,16 +14,9 @@ Leanie Williams
 
 *Work in progress*
 
-rules:
-1. same strand
-2. serially located
-	- overlap of less than 500
-3. no fight club
-
-
-1. features in an operon must be co-oriented. 
+1. Features in an operon must be co-oriented. 
 	- co oriented would mean that the features are on the same strand (+ or -)
-2. features must be found serially.
+2. Features must be found serially.
 	- serially means that the number of bases between features should not exceed 500 bases
 (*note* we will examine the threshold of bases and how it impacts the output)
 
@@ -36,6 +29,7 @@ rules:
 ---
 
 Testing:
+
 **input**: RdKW20.annot.gff
 - sequence-region 1 1830138
 - species https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?id=727
@@ -44,6 +38,13 @@ Testing:
 
 ### GFF to Operons
 We define functions for parsing the GFF, finding operons based on our rules (see Methods), and returning the results as a csv. The csv contains a header  `Feature, Locus_tag, Gene_type, Operon_ID, Operon_Start, Operon_End, Strand` and each feature (defined as genes or pseudogenes) is specified within an operon. 
+
+The user can include a separation threshold (`--sep_thresh`) which will specify how many bases between features. This parameter has a range between 0 and 500 bases, and a default of 500. This parameter informs the results in the columns `oriented` and `oriented_nearby`. If a feature is located on the '+' strand (sense), they receive a 1 and the '-' strand (antisense) is 0. The results of `oriented_nearby` are `TRUE` if the features are both on the same strand and located within the defined separation threshold, defining the operon. 
+
+### BED formatted operons
+The user may return an optional [[BED]](http://useast.ensembl.org/info/website/upload/bed.html) formatted file (`--bed`).
+
+**To do**: 
 
 - argument parser
 - define feature name, BED attributes (chromosome, start, stop, name, score, strand, ID, feature type, description etc etc...)
