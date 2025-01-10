@@ -6,8 +6,6 @@
 ### daRulez:
 ### 1. same strand
 ### 2. serially located
-###	- overlap of less than 500 --> WIP
-### 3. no fight club
 ### 
 ### 
 ### input: gff
@@ -124,7 +122,7 @@ def operons_to_csv(operons, sep_thresh, output_file):
     written = set()
     with open(output_file, 'w') as f:
         ### header
-        f.write("Feature, Locus_tag, Gene_type, Operon_ID, Operon_Start, Operon_End, Strand, Oriented, Oriented_Nearby\n" )
+        f.write("Feature, Locus_tag, Gene_type, Operon_ID, Operon_Start, Operon_End, Feature_Start, Feature_End, Strand, Oriented, Oriented_Nearby\n" )
            
         for operon in operons:
             
@@ -136,6 +134,8 @@ def operons_to_csv(operons, sep_thresh, output_file):
             previous_end = None
             previous_strand = None
             
+            f.write(f"Operon,{operon_id},{operon_id},,Operon,{operon_start},{operon_end},,,{strand},,\n")
+
             for feature in operon:
                 
                 attributes = feature['attributes_dict']
@@ -143,6 +143,9 @@ def operons_to_csv(operons, sep_thresh, output_file):
                 gene_type = 'pseudogene' if 'pseudo' in attributes else 'gene'
                 feature_name = attributes.get('Name')
                 unique_key = (locus_tag, operon_id, strand)
+
+                feature_start = feature['start']
+                feature_end = feature['end']
 
                 ### oriented and oriented_nearby
                 oriented = 1 if strand == '+' else 0
@@ -154,7 +157,7 @@ def operons_to_csv(operons, sep_thresh, output_file):
                 ### write results to csv
                 ### no duplicates
                 if unique_key not in written:
-                    f.write(f"{feature_name},{locus_tag}, {gene_type} ,{operon_id},{operon_start}, {operon_end}, {strand}, {oriented}, {oriented_nearby}\n")
+                    f.write(f"{feature_name},{locus_tag}, {gene_type} ,{operon_id},{operon_start}, {operon_end}, {feature_start},{feature_end},{strand}, {oriented}, {oriented_nearby}\n")
                     written.add(unique_key)
 
                 ### Update previous_end and previous_strand for the next iteration
