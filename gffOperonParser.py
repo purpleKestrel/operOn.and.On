@@ -81,6 +81,34 @@ def find_operons(df, sep_thresh):
 
     return operons
     
+
+def output_intergenic_regions(operons, sep_thresh, intergenic_bed_file):
+    """ 
+    Write intergenic regions to a BED file. 
+    """
+    with open(intergenic_bed_file, 'w') as f:
+        last_end = None
+        last_chrom = None
+        last_operon_id = None ### keep track of the operon id for naming the region
+
+        for operon in operons:
+            current_operon_id = f"{operon[0]['attributes_dict'].get('Name', operon[0]['attributes_dict'].get('locus_tag', 'unknown'))}_Op"
+            chrom = operon[0]['seqname']
+            strand = operon[0]['strand']
+            for feature in operon:
+                chrom = feature['seqname']
+                start = min(feature['start'] for feature in operon)#feature['start']
+                if last_end is not None and last_chrom == chrom and start > last_end + 1:
+                    intergenic_start = last_end + 1
+                    intergenic_end = start - 1
+
+                    region_name = f"{last_operon_id}_{current_operon_id}"
+                    f.write(f"{chrom}\t{intergenic_start}\t{intergenic_end}\t{region_name}\t{strand}\n")
+                
+                last_end = max(feature['end'] for feature in operon)
+                last_chrom = chrom
+                last_operon_id = current_operon_id
+
 def gff_2_bed(gff_file, bed_file):
     with open(gff_file, 'r') as gff, open(bed_file, 'w') as bed:
         for line in gff:
@@ -171,7 +199,7 @@ def main():
     parser.add_argument('--output_file', type=str, help='Output base_name for files')
     parser.add_argument('-b','--bed', action='store_true', help='Output operons in BED format' )
     parser.add_argument('--sep_thresh', type=int, default=500, choices=range(0, 501), help='Maximum number of bases between features to consider them as part of the same operon (0-500, default 500)')
-    
+    parser.add_argument('--inter', action='store_true', help='Output BED file for intergenic regions')
     #parser.add_argument('v', '--verbose', action='store_true')
     #parser.add_argument('-h', '--help', action='store_true')
 
@@ -182,6 +210,7 @@ def main():
     base_name = os.path.splitext(args.output_file)[0]
     csv_file = f"{base_name}.csv"
     bed_file = f"{base_name}.bed"
+    intergenic_bed_file = f"{base_name}_intergenic.bed"
 
     ### read gff 
     df = read_gff(args.gff_file)
@@ -196,6 +225,10 @@ def main():
     ### for bed flag
     if args.bed:
         operons_2_bed(operons, bed_file)
+
+
+    if args.inter:
+        output_intergenic_regions(operons, args.sep_thresh, intergenic_bed_file)
 
 
 if __name__ == '__main__':
