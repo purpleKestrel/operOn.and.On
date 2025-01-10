@@ -43,6 +43,7 @@ The user can include a separation threshold (`--sep_thresh`) which will specify 
 
 ### BED formatted operons
 The user may return an optional [[BED]](http://useast.ensembl.org/info/website/upload/bed.html) formatted file (`--bed`).
+The user may return a bed file for intergenic regions using `--inter`. 
 
 **To do**: 
 
