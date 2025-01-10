@@ -133,18 +133,25 @@ def main():
     parser.add_argument('gff_file', type=str, help='Path to the GFF file')
     parser.add_argument('output_file', type=str, help='Output base_name for files')
     parser.add_argument('-b','--bed', action='store_true', help='Output operons in BED format' )
+    parser.add_argument('--sep_thresh', type=int, default=500, choices=range(0, 501), help='Maximum number of bases between features to consider them as part of the same operon (0-500, default 500)')
+    
     #parser.add_argument('v', '--verbose', action='store_true')
     #parser.add_argument('-h', '--help', action='store_true')
 
-
+    ### parse arguments
     args = parser.parse_args()
     
+    ### name output and files
     base_name = os.path.splitext(args.output_file)[0]
     csv_file = f"{base_name}.csv"
     bed_file = f"{base_name}.bed"
 
+    ### read gff 
     df = read_gff(args.gff_file)
-    operons = find_operons(df)
+
+    ### finding out operons
+    ### taking user input 
+    operons = find_operons(df, args.sep_thresh)
     
     ### output csv
     operons_to_csv(operons, csv_file)
