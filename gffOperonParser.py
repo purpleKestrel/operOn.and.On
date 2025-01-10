@@ -51,20 +51,31 @@ def extract_gene_name(attributes):
             return attr.split('=')[1]
     return 'unknown' ## default for no name/id
     
-def find_operons(df):
-    """ Identify operons based on daRulez: co-orientation and seriality of features. """
+def find_operons(df, sep_thresh):
+    """ 
+    Identify operons based on daRulez:
+    1. co-orientation 
+    2. seriality of features. 
+
+    --sep_thresh 
+    default = 500 (0-500)
+    separation between features
+    how the user defines inter-genic regions
+    """
     operons = []
     df['attributes_dict'] = df['attribute'].apply(parse_attributes)
     
     sorted_df = df.sort_values(by=['seqname', 'start'])
     current_operon = []
+    last_end = None
     last_strand = None
     
     for index, row in sorted_df.iterrows():
-        if (current_operon and (row['strand'] != last_strand)):
-                operons.append(current_operon)
-                current_operon = []
+        if (current_operon and (row['strand'] != last_strand or (row['start'] - last_end > sep_thresh))):
+            operons.append(current_operon)
+            current_operon = []
         current_operon.append(row)
+        last_end = row['end']
         last_strand = row['strand']
 
     if current_operon:
@@ -104,34 +115,57 @@ def operons_2_bed(operons, bed_file):
             bed_line = f"{chrom}\t{start}\t{end}\t{operon_id}\t{score}\t{strand}\n"
             bed.write(bed_line)
 
-def operons_to_csv(operons, output_file):
-    """ Convert list of operons to CSV format. """
+def operons_to_csv(operons, sep_thresh, output_file):
+    """ 
+    Create operon results and return in CSV format.
+    oriented: same strand (0 for -, 1 for +)
+    oriented_nearby: same strand AND w/i sep_thresh (TRUE, 1)
+    """
     written = set()
     with open(output_file, 'w') as f:
         ### header
-        f.write("Feature, Locus_tag, Gene_type, Operon_ID, Operon_Start, Operon_End, Strand\n" )
+        f.write("Feature, Locus_tag, Gene_type, Operon_ID, Operon_Start, Operon_End, Strand, Oriented, Oriented_Nearby\n" )
            
         for operon in operons:
+            
             operon_id = f"{operon[0]['attributes_dict'].get('Name', operon[0]['attributes_dict'].get('locus_tag', 'unknown'))}_Op"
             operon_start = min(feature['start'] for feature in operon)
             operon_end = max(feature['end'] for feature in operon)
             strand = operon[0]['strand']  # All features in operon have the same strand
             
+            previous_end = None
+            previous_strand = None
+            
             for feature in operon:
+                
                 attributes = feature['attributes_dict']
                 locus_tag = attributes.get('locus_tag')
                 gene_type = 'pseudogene' if 'pseudo' in attributes else 'gene'
                 feature_name = attributes.get('Name')
                 unique_key = (locus_tag, operon_id, strand)
+
+                ### oriented and oriented_nearby
+                oriented = 1 if strand == '+' else 0
+                if previous_strand == strand and previous_end is not None and (feature['start'] - previous_end <= sep_thresh):
+                    oriented_nearby = 'TRUE'
+                else:
+                    oriented_nearby = 'FALSE'
+
+                ### write results to csv
+                ### no duplicates
                 if unique_key not in written:
-                    f.write(f"{feature_name},{locus_tag}, {gene_type} ,{operon_id},{operon_start}, {operon_end}, {strand}\n")
+                    f.write(f"{feature_name},{locus_tag}, {gene_type} ,{operon_id},{operon_start}, {operon_end}, {strand}, {oriented}, {oriented_nearby}\n")
                     written.add(unique_key)
+
+                ### Update previous_end and previous_strand for the next iteration
+                previous_end = feature['end']
+                previous_strand = strand
 
 
 def main():
     parser = argparse.ArgumentParser(description='Identify operons in a GFF file and output to CSV, filtered to genes and pseudogenes.')
-    parser.add_argument('gff_file', type=str, help='Path to the GFF file')
-    parser.add_argument('output_file', type=str, help='Output base_name for files')
+    parser.add_argument('--gff_file', type=str, help='Path to the GFF file')
+    parser.add_argument('--output_file', type=str, help='Output base_name for files')
     parser.add_argument('-b','--bed', action='store_true', help='Output operons in BED format' )
     parser.add_argument('--sep_thresh', type=int, default=500, choices=range(0, 501), help='Maximum number of bases between features to consider them as part of the same operon (0-500, default 500)')
     
@@ -154,7 +188,7 @@ def main():
     operons = find_operons(df, args.sep_thresh)
     
     ### output csv
-    operons_to_csv(operons, csv_file)
+    operons_to_csv(operons, args.sep_thresh, csv_file)
 
     ### for bed flag
     if args.bed:
