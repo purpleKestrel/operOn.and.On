@@ -42,6 +42,9 @@ Testing:
 
 ## Results
 
+### GFF to Operons
+We define functions for parsing the GFF, finding operons based on our rules (see Methods), and returning the results as a csv. The csv contains a header  `Feature, Locus_tag, Gene_type, Operon_ID, Operon_Start, Operon_End, Strand` and each feature (defined as genes or pseudogenes) is specified within an operon. 
+
 - argument parser
 - define feature name, BED attributes (chromosome, start, stop, name, score, strand, ID, feature type, description etc etc...)
 

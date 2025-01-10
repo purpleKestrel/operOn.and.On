@@ -3,13 +3,18 @@
 ### leanie 
 ### operonandon start
 ###
-### same strand
-### serially located --> WIP: overlap <500 bp
+### daRulez:
+### 1. same strand
+### 2. serially located
+###	- overlap of less than 500 --> WIP
+### 3. no fight club
+### 
+### 
 ### input: gff
-### output: csv ??
+### output: csv +
 ##########
 ### use
-### python3 script/operon.start.py <input.gff> <output.csv>
+### python3 script/gffOperonParser.py <input.gff> <output.csv>
 ##########
 ##########
 ##########
@@ -125,8 +130,8 @@ def main():
     parser.add_argument('gff_file', type=str, help='Path to the GFF file')
     parser.add_argument('output_file', type=str, help='Output base_name for files')
     parser.add_argument('-b','--bed', action='store_true', help='Output operons in BED format' )
-    #parser.add_argument('v', '--verbose')
-    #parser.add_argument('-h', '--help')
+    #parser.add_argument('v', '--verbose', action='store_true')
+    #parser.add_argument('-h', '--help', action='store_true')
 
 
     args = parser.parse_args()
