@@ -22,7 +22,14 @@ Leanie Williams
 
 
 **input**: gff
+- defined separation threshold (0-500)
+- anything else???
+
 **output** : csv
+
+- results csv
+- BED file of operons
+- BED file of intergenic regions
 
 
 
@@ -39,15 +46,23 @@ Testing:
 ### GFF to Operons
 We define functions for parsing the GFF, finding operons based on our rules (see Methods), and returning the results as a csv. The csv contains a header  `Feature, Locus_tag, Gene_type, Operon_ID, Operon_Start, Operon_End, Strand` and each feature (defined as genes or pseudogenes) is specified within an operon. 
 
-The user can include a separation threshold (`--sep_thresh`) which will specify how many bases between features. This parameter has a range between 0 and 500 bases, and a default of 500. This parameter informs the results in the columns `oriented` and `oriented_nearby`. If a feature is located on the '+' strand (sense), they receive a 1 and the '-' strand (antisense) is 0. The results of `oriented_nearby` are `TRUE` if the features are both on the same strand and located within the defined separation threshold, defining the operon. 
+The user can include a separation threshold (`--sep_thresh`) which will specify how many bases between features. This parameter has a range between 0 and 500 bases, and a default of 500. This parameter informs the results in the columns `oriented` and `oriented_nearby`. If a feature is located on the '+' strand (sense), they receive a 1 and the '-' strand (antisense) is 0. The results of `oriented_nearby` are `TRUE` if the features are both on the same strand and located within the defined separation threshold, defining the operon.
+
 
 ### BED formatted operons
 The user may return an optional [[BED]](http://useast.ensembl.org/info/website/upload/bed.html) formatted file (`--bed`).
-The user may return a bed file for intergenic regions using `--inter`. 
+The user may return a bed file for intergenic regions using `--inter`.
+
 
 **To do**: 
 
 - argument parser
+	- help
+	- verbose
+	
 - define feature name, BED attributes (chromosome, start, stop, name, score, strand, ID, feature type, description etc etc...)
+	- fix number of cols in BED outputs
+	- BED off by 1 error?
+	- naming convention of results --> remove GFF, remove underscore?
 
 
